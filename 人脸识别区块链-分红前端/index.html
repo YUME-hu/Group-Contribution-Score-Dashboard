@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小组贡献积分统计系统 - 数据可视化版</title>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- 样式文件 -->
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+
+<div class="main">
+  <!-- 标题 -->
+  <div class="title">📊 小组贡献积分统计系统（可视化版）</div>
+
+  <!-- 计算区域 -->
+  <div class="calc-box">
+    <label>🎯 难度等级：</label>
+    <select id="level">
+      <option value="1">1级 - 简单（×1.0）</option>
+      <option value="2">2级 - 中等（×1.5）</option>
+      <option value="3">3级 - 困难（×2.0）</option>
+      <option value="4">4级 - 专家（×2.5）</option>
+      <option value="5">5级 - 关键（×3.0）</option>
+    </select>
+
+    <label>⏱️ 预估工时：</label>
+    <input type="number" id="hour" value="2" style="width:80px" min="0.5" step="0.5">
+    <span class="calc-result">本次积分：<span id="scoreResult">0</span></span>
+    <span id="hourValidationMsg" class="validation-msg">工时不能小于0.5小时</span>
+  </div>
+
+  <!-- 控制按钮 -->
+  <div class="ctrl">
+    <select id="user"></select>
+    <button onclick="window.app.handleAddScore()">➕ 一键加到该成员</button>
+    <button onclick="window.app.handleSubtractScore()" class="red">➖ 一键扣除积分</button>
+    <button onclick="window.app.handleAddMember()" class="purple" id="addMemberBtn">👥 添加成员</button>
+    <button onclick="window.app.handleBatchManagement()" class="green">📋 批量管理</button>
+    <button onclick="window.app.handleExportCSV()" class="green">📥 导出积分表格</button>
+    <button onclick="window.app.handleResetAll()" class="red">🗑️ 清空所有积分</button>
+    <button onclick="window.app.handleClearLog()" class="gray">📝 清空记录</button>
+  </div>
+
+  <!-- 统计概览 -->
+  <div class="stats-overview">
+    <div class="stat-card total">
+      <div class="stat-label">团队总积分</div>
+      <div class="stat-value" id="totalScore">0</div>
+    </div>
+    <div class="stat-card avg">
+      <div class="stat-label">人均积分</div>
+      <div class="stat-value" id="avgScore">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">最高积分</div>
+      <div class="stat-value" id="maxScore">0</div>
+    </div>
+    <div class="stat-card leader">
+      <div class="stat-label">当前领先</div>
+      <div class="stat-value" id="leaderName">-</div>
+    </div>
+  </div>
+
+  <!-- 排行榜 -->
+  <div class="rank-box">
+    <div class="rank-title">🏆 贡献积分排行榜</div>
+    <div id="rankList"></div>
+  </div>
+
+  <!-- 成员卡片 -->
+  <div class="members" id="membersBox"></div>
+
+  <!-- 图表区域 - 积分占比 -->
+  <div class="charts-section">
+    <div class="section-title">
+      <span>📈 成员积分占比分析</span>
+      <div class="chart-controls">
+        <button class="chart-btn active" onclick="window.app.handleSwitchChartType('doughnut')" id="btnDoughnut">🍩 环形图</button>
+        <button class="chart-btn" onclick="window.app.handleSwitchChartType('bar')" id="btnBar">📊 柱状图</button>
+        <button class="chart-btn" onclick="window.app.handleSwitchChartType('pie')" id="btnPie">🥧 饼图</button>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-container">
+        <div class="chart-wrapper">
+          <canvas id="ratioChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-wrapper">
+          <canvas id="scoreChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 趋势图表区域 -->
+  <div class="trend-section">
+    <div class="section-title">
+      <span>📊 积分变化趋势</span>
+    </div>
+    <div class="trend-container">
+      <div class="trend-filters">
+        <label>成员：</label>
+        <select id="trendUser" onchange="window.app.handleUpdateTrendChart()">
+          <option value="all">全部成员</option>
+        </select>
+        <label>时间范围：</label>
+        <select id="timeRange" onchange="window.app.handleUpdateTrendChart()">
+          <option value="all">全部</option>
+          <option value="today">今天</option>
+          <option value="week">最近7天</option>
+          <option value="month">最近30天</option>
+        </select>
+      </div>
+      <div class="chart-wrapper large">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 日志区域 -->
+  <div class="log-section">
+    <div class="log-title">📝 操作日志</div>
+    <div class="log" id="logList"></div>
+  </div>
+</div>
+
+<!-- 应用入口 -->
+<script type="module" src="js/main.js"></script>
+
+</body>
+</html>
