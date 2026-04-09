@@ -10,6 +10,7 @@ import StatsRenderer from '../ui/StatsRenderer.js'
 import LogRenderer from '../ui/LogRenderer.js'
 import Toast from '../ui/Toast.js'
 import ModalManager from '../ui/ModalManager.js'
+import config from '../config.js'
 
 /**
  * 应用主类
@@ -27,20 +28,10 @@ class App {
     }
 
     // 颜色调色板
-    this.colorPalette = [
-      '#409eff', '#67c23a', '#e6a23c', '#f56c6c',
-      '#9b59b6', '#1abc9c', '#34495e', '#e74c3c',
-      '#3498db', '#2ecc71', '#f39c12', '#95a5a6'
-    ]
+  this.colorPalette = config.ui.colorPalette
 
-    // 难度系数
-    this.levelCoeff = {
-      1: 1.0,
-      2: 1.5,
-      3: 2.0,
-      4: 2.5,
-      5: 3.0
-    }
+  // 难度系数
+  this.levelCoeff = config.scoreCalculation.difficultyCoefficients
 
     // 事件管理器
     this.eventManager = new EventManager()
@@ -501,8 +492,8 @@ class App {
    * 处理添加成员
    */
   handleAddMember() {
-    if (this.state.users.length >= 15) {
-      this.toast.show('成员数量已达到上限（15人）', 'warning')
+    if (this.state.users.length >= config.system.maxMembers) {
+      this.toast.show(`成员数量已达到上限（${config.system.maxMembers}人）`, 'warning')
       return
     }
 
@@ -560,8 +551,8 @@ class App {
    * @param {string[]} names - 成员名称列表
    */
   handleBatchImport(names) {
-    if (this.state.users.length + names.length > 15) {
-      this.toast.show('导入后成员数量将超过上限（15人）', 'error')
+    if (this.state.users.length + names.length > config.system.maxMembers) {
+      this.toast.show(`导入后成员数量将超过上限（${config.system.maxMembers}人）`, 'error')
       return 0
     }
 
@@ -820,6 +811,143 @@ class App {
    */
   handleUpdateTrendChart() {
     this.renderers.chart.updateTrendChart()
+  }
+
+  /**
+   * 处理规则配置管理
+   */
+  handleConfigManagement() {
+    this.modalManager.showConfigModal({
+      config: JSON.parse(JSON.stringify(config)),
+      onSave: (newConfig) => {
+        try {
+          // 验证配置
+          this.validateConfig(newConfig)
+          
+          // 保存配置变更历史
+          this.saveConfigHistory(config, newConfig)
+          
+          // 更新配置
+          Object.assign(config, newConfig)
+          
+          // 重新初始化服务
+          this.initServices()
+          
+          // 重新渲染
+          this.render()
+          
+          this.toast.show('配置已更新并生效', 'success')
+          return true
+        } catch (error) {
+          this.toast.show(`配置验证失败: ${error.message}`, 'error')
+          return false
+        }
+      }
+    })
+  }
+
+  /**
+   * 验证配置
+   * @param {Object} newConfig - 新配置
+   */
+  validateConfig(newConfig) {
+    // 验证难度系数
+    if (!newConfig.scoreCalculation || !newConfig.scoreCalculation.difficultyCoefficients) {
+      throw new Error('难度系数配置缺失')
+    }
+    
+    // 验证成员等级
+    if (!newConfig.memberLevels || !newConfig.memberLevels.levels || newConfig.memberLevels.levels.length === 0) {
+      throw new Error('成员等级配置缺失')
+    }
+    
+    // 验证分红规则
+    if (!newConfig.dividend || !newConfig.dividend.ratioThresholds || newConfig.dividend.ratioThresholds.length === 0) {
+      throw new Error('分红规则配置缺失')
+    }
+    
+    // 验证系统配置
+    if (!newConfig.system || newConfig.system.maxMembers < 1) {
+      throw new Error('系统配置无效')
+    }
+  }
+
+  /**
+   * 保存配置变更历史
+   * @param {Object} oldConfig - 旧配置
+   * @param {Object} newConfig - 新配置
+   */
+  saveConfigHistory(oldConfig, newConfig) {
+    const history = JSON.parse(localStorage.getItem('configHistory') || '[]')
+    
+    const changeLog = {
+      timestamp: new Date().toISOString(),
+      version: newConfig.version,
+      changes: this.generateChangeLog(oldConfig, newConfig)
+    }
+    
+    history.push(changeLog)
+    
+    // 保留最近10条历史记录
+    if (history.length > 10) {
+      history.shift()
+    }
+    
+    localStorage.setItem('configHistory', JSON.stringify(history))
+  }
+
+  /**
+   * 生成配置变更日志
+   * @param {Object} oldConfig - 旧配置
+   * @param {Object} newConfig - 新配置
+   * @returns {Array} 变更日志
+   */
+  generateChangeLog(oldConfig, newConfig) {
+    const changes = []
+    
+    // 比较难度系数
+    const oldDifficulty = oldConfig.scoreCalculation.difficultyCoefficients
+    const newDifficulty = newConfig.scoreCalculation.difficultyCoefficients
+    
+    for (const level in newDifficulty) {
+      if (oldDifficulty[level] !== newDifficulty[level]) {
+        changes.push(`难度系数 ${level} 级: ${oldDifficulty[level]} → ${newDifficulty[level]}`)
+      }
+    }
+    
+    // 比较成员等级
+    const oldLevels = oldConfig.memberLevels.levels
+    const newLevels = newConfig.memberLevels.levels
+    
+    if (oldLevels.length !== newLevels.length) {
+      changes.push(`成员等级数量: ${oldLevels.length} → ${newLevels.length}`)
+    } else {
+      oldLevels.forEach((oldLevel, index) => {
+        const newLevel = newLevels[index]
+        if (JSON.stringify(oldLevel) !== JSON.stringify(newLevel)) {
+          changes.push(`成员等级 ${oldLevel.level} 配置变更`)
+        }
+      })
+    }
+    
+    // 比较分红规则
+    const oldDividend = oldConfig.dividend
+    const newDividend = newConfig.dividend
+    
+    if (oldDividend.cycleDays !== newDividend.cycleDays) {
+      changes.push(`分红周期: ${oldDividend.cycleDays} → ${newDividend.cycleDays} 天`)
+    }
+    
+    if (oldDividend.minScoreThreshold !== newDividend.minScoreThreshold) {
+      changes.push(`最低分红积分阈值: ${oldDividend.minScoreThreshold} → ${newDividend.minScoreThreshold}`)
+    }
+    
+    // 比较系统配置
+    if (oldConfig.system.maxMembers !== newConfig.system.maxMembers) {
+      changes.push(`最大成员数量: ${oldConfig.system.maxMembers} → ${newConfig.system.maxMembers}`)
+    }
+    
+    return changes
   }
 }
 

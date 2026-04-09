@@ -152,6 +152,15 @@ button.purple:hover {
   box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
 }
 
+button.blue {
+  background: #1e90ff;
+}
+
+button.blue:hover {
+  background: #4169e1;
+  box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3);
+}
+
 /* ==================== 统计卡片区域 ==================== */
 .stats-overview {
   display: grid;
@@ -596,4 +605,169 @@ button.purple:hover {
 .empty-state-icon {
   font-size: 48px;
   margin-bottom: 16px;
+}
+
+/* ==================== 规则配置模态框样式 ==================== */
+.modal-section {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.modal-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.modal-section h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-group {
+  margin-bottom: 16px;
+}
+
+.config-group label {
+  display: block;
+  font-weight: 500;
+  color: #606266;
+  margin-bottom: 8px;
+}
+
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.config-item span {
+  min-width: 80px;
+  color: #606266;
+}
+
+.config-item input {
+  flex: 1;
+  min-width: 120px;
+}
+
+.level-item {
+  background: #f5f7fa;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.level-item h5 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #409eff;
+  margin-bottom: 8px;
+}
+
+.level-config {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.level-config span {
+  min-width: 80px;
+  color: #606266;
+}
+
+.level-config input {
+  width: 100px;
+}
+
+.config-history {
+  max-height: 200px;
+  overflow-y: auto;
+  background: #f5f7fa;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.history-item {
+  background: #fff;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-left: 3px solid #409eff;
+}
+
+.history-item:last-child {
+  margin-bottom: 0;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.history-date {
+  color: #909399;
+}
+
+.history-version {
+  color: #67c23a;
+  font-weight: 500;
+}
+
+.history-changes {
+  font-size: 13px;
+  color: #606266;
+}
+
+.history-change {
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.empty-history {
+  text-align: center;
+  color: #909399;
+  padding: 20px;
+  font-style: italic;
+}
+
+/* ==================== 响应式设计 ==================== */
+@media (max-width: 768px) {
+  .config-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .config-item span {
+    min-width: auto;
+  }
+  
+  .config-item input {
+    width: 100%;
+  }
+  
+  .level-config {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .level-config span {
+    min-width: auto;
+  }
+  
+  .level-config input {
+    width: 100%;
+  }
 }

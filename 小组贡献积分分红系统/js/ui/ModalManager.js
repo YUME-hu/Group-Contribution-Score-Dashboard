@@ -376,6 +376,152 @@ class ModalManager {
       }
     })
   }
+
+  /**
+   * 显示规则配置模态框
+   * @param {Object} options - 配置选项
+   */
+  showConfigModal(options = {}) {
+    const { config, onSave } = options
+    const modal = this.createModal('⚙️ 规则配置管理')
+
+    modal.body.innerHTML = `
+      <!-- 难度系数配置 -->
+      <div class="modal-section">
+        <h4>📊 积分计算规则</h4>
+        <div class="config-group">
+          <label>难度系数配置：</label>
+          ${Object.entries(config.scoreCalculation.difficultyCoefficients).map(([level, value]) => `
+            <div class="config-item">
+              <span>等级 ${level}：</span>
+              <input type="number" class="difficulty-coeff" data-level="${level}" value="${value}" step="0.1" min="0.1">
+            </div>
+          `).join('')}
+        </div>
+        <div class="config-group">
+          <label>最小工时：</label>
+          <input type="number" id="minHours" value="${config.scoreCalculation.minHours}" step="0.1" min="0.1">
+        </div>
+      </div>
+      
+      <!-- 成员等级配置 -->
+      <div class="modal-section">
+        <h4>🏆 成员等级规则</h4>
+        <div class="config-group">
+          ${config.memberLevels.levels.map((level, index) => `
+            <div class="config-item level-item">
+              <h5>等级 ${level.level} - ${level.name}</h5>
+              <div class="level-config">
+                <span>最低积分：</span>
+                <input type="number" class="level-min-score" data-index="${index}" value="${level.minScore}" min="0">
+                <span>最高积分：</span>
+                <input type="number" class="level-max-score" data-index="${index}" value="${level.maxScore === Infinity ? 99999 : level.maxScore}" min="0">
+                <span>系数：</span>
+                <input type="number" class="level-coefficient" data-index="${index}" value="${level.coefficient}" step="0.1" min="0.1">
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      
+      <!-- 分红规则配置 -->
+      <div class="modal-section">
+        <h4>💰 分红规则</h4>
+        <div class="config-group">
+          <label>分红周期（天）：</label>
+          <input type="number" id="cycleDays" value="${config.dividend.cycleDays}" min="1">
+        </div>
+        <div class="config-group">
+          <label>最低分红积分阈值：</label>
+          <input type="number" id="minScoreThreshold" value="${config.dividend.minScoreThreshold}" min="0">
+        </div>
+      </div>
+      
+      <!-- 系统配置 -->
+      <div class="modal-section">
+        <h4>⚙️ 系统配置</h4>
+        <div class="config-group">
+          <label>最大成员数量：</label>
+          <input type="number" id="maxMembers" value="${config.system.maxMembers}" min="1">
+        </div>
+      </div>
+      
+      <!-- 配置历史 -->
+      <div class="modal-section">
+        <h4>📋 配置变更历史</h4>
+        <div id="configHistory" class="config-history">
+          ${this.renderConfigHistory()}
+        </div>
+      </div>
+    `
+
+    modal.footer.innerHTML = `
+      <button class="blue" id="saveConfigBtn">保存配置</button>
+      <button class="gray" data-action="close">取消</button>
+    `
+
+    document.body.appendChild(modal.overlay)
+
+    // 绑定事件
+    document.getElementById('saveConfigBtn').addEventListener('click', () => {
+      const newConfig = JSON.parse(JSON.stringify(config))
+      
+      // 更新难度系数
+      document.querySelectorAll('.difficulty-coeff').forEach(input => {
+        const level = input.dataset.level
+        newConfig.scoreCalculation.difficultyCoefficients[level] = parseFloat(input.value)
+      })
+      
+      // 更新最小工时
+      newConfig.scoreCalculation.minHours = parseFloat(document.getElementById('minHours').value)
+      
+      // 更新成员等级
+      newConfig.memberLevels.levels.forEach((level, index) => {
+        level.minScore = parseInt(document.querySelector(`.level-min-score[data-index="${index}"]`).value)
+        const maxScoreInput = document.querySelector(`.level-max-score[data-index="${index}"]`)
+        level.maxScore = parseInt(maxScoreInput.value) === 99999 ? Infinity : parseInt(maxScoreInput.value)
+        level.coefficient = parseFloat(document.querySelector(`.level-coefficient[data-index="${index}"]`).value)
+      })
+      
+      // 更新分红规则
+      newConfig.dividend.cycleDays = parseInt(document.getElementById('cycleDays').value)
+      newConfig.dividend.minScoreThreshold = parseInt(document.getElementById('minScoreThreshold').value)
+      
+      // 更新系统配置
+      newConfig.system.maxMembers = parseInt(document.getElementById('maxMembers').value)
+      
+      if (onSave && onSave(newConfig)) {
+        this.closeActiveModal()
+      }
+    })
+  }
+
+  /**
+   * 渲染配置变更历史
+   * @returns {string} 历史记录HTML
+   */
+  renderConfigHistory() {
+    const history = JSON.parse(localStorage.getItem('configHistory') || '[]')
+    
+    if (history.length === 0) {
+      return '<p class="empty-history">暂无配置变更历史</p>'
+    }
+    
+    return history.slice().reverse().map(log => {
+      const date = new Date(log.timestamp).toLocaleString('zh-CN')
+      return `
+        <div class="history-item">
+          <div class="history-header">
+            <span class="history-date">${date}</span>
+            <span class="history-version">版本: ${log.version}</span>
+          </div>
+          <div class="history-changes">
+            ${log.changes.map(change => `<div class="history-change">• ${change}</div>`).join('')}
+          </div>
+        </div>
+      `
+    }).join('')
+  }
 }
 
 export default ModalManager
